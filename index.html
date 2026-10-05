@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Singapore Air Quality | Live PSI</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #152238;
+      --muted: #718096;
+      --line: #e7edf3;
+      --blue: #2864dc;
+      --surface: #ffffff;
+      --page: #f4f7fb;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--page); }
+    .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 36px; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 30px; }
+    .brand { display: flex; align-items: center; gap: 11px; color: #31435c; font-size: 14px; font-weight: 650; letter-spacing: .02em; }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: white; background: linear-gradient(145deg, #3478ed, #2453c7); box-shadow: 0 5px 14px #2864dc38; }
+    .live-pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid #d8e9df; border-radius: 999px; color: #34734c; background: #f4fbf6; font-size: 12px; font-weight: 650; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #35ae68; box-shadow: 0 0 0 3px #35ae681c; }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+    .eyebrow { margin: 0 0 9px; color: var(--blue); font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 38px); letter-spacing: -.04em; line-height: 1.2; }
+    .subtitle { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .refresh { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 15px; border: 1px solid #dce4ed; border-radius: 10px; color: #33445b; background: var(--surface); box-shadow: 0 2px 5px #172b4d08; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; transition: .18s ease; }
+    .refresh:hover { border-color: #b9c9dd; transform: translateY(-1px); }
+    .refresh:disabled { opacity: .6; cursor: wait; transform: none; }
+    .summary { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .card { min-height: 111px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 4px 14px #263c5b06; }
+    .card-label { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .card-value { color: #1c2d45; font-size: 24px; font-weight: 750; letter-spacing: -.03em; }
+    .card-note { margin-left: 8px; color: #8794a5; font-size: 12px; font-weight: 500; letter-spacing: 0; }
+    .status-line { display: flex; align-items: center; gap: 8px; }
+    .status-tag { padding: 5px 9px; border-radius: 7px; font-size: 12px; font-weight: 700; }
+    .table-card { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 4px 14px #263c5b06; }
+    .table-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 19px 21px; border-bottom: 1px solid var(--line); }
+    .table-heading h2 { margin: 0; font-size: 15px; font-weight: 720; }
+    .table-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .unit { padding: 6px 9px; border-radius: 7px; color: #66768c; background: #f4f7fa; font-size: 11px; font-weight: 650; white-space: nowrap; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    thead { background: #f8fafc; }
+    th { height: 45px; padding: 0 15px; color: #738197; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-align: center; text-transform: uppercase; }
+    th:first-child { width: 220px; padding-left: 21px; text-align: left; }
+    td { height: 54px; padding: 8px 15px; border-top: 1px solid #eef2f6; text-align: center; font-size: 13px; }
+    tbody tr:hover { background: #fbfcfe; }
+    td:first-child { padding-left: 21px; text-align: left; }
+    .metric { color: #33445b; font-weight: 650; }
+    .metric-code { display: block; margin-top: 3px; color: #9aa6b5; font-size: 10px; font-weight: 500; }
+    .value { display: inline-flex; min-width: 38px; justify-content: center; padding: 6px 9px; border-radius: 7px; font-variant-numeric: tabular-nums; font-weight: 720; }
+    .missing { color: #a5afbc; font-weight: 500; }
+    .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 9px 16px; padding: 15px 21px; border-top: 1px solid var(--line); color: #77859a; font-size: 11px; }
+    .legend-title { color: #4d5d73; font-weight: 700; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { width: 9px; height: 9px; border-radius: 3px; }
+    .footer { display: flex; justify-content: space-between; gap: 14px; margin-top: 13px; color: #8a96a6; font-size: 11px; }
+    .message { padding: 24px; color: #75849a; text-align: center; font-size: 13px; }
+    .message.error { color: #b54747; }
+    .spin { animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 650px) {
+      .shell { width: min(100% - 24px, 1180px); padding-top: 22px; }
+      .topline { margin-bottom: 23px; }
+      .intro { align-items: start; flex-direction: column; }
+      .summary { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .card { min-height: 96px; padding: 14px; }
+      .card:first-child { grid-column: 1 / -1; }
+      .card-value { font-size: 21px; }
+      .table-heading { padding: 16px; }
+      .footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topline">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">◉</span>Air Quality Monitor</div>
+      <span class="live-pill"><span class="dot"></span>LIVE DATA</span>
+    </div>
+
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">SINGAPORE · AIR QUALITY</p>
+        <h1 id="page-title">Singapore Air Quality</h1>
+        <p class="subtitle">Explore PSI and pollutant sub-index readings across Singapore's regions.</p>
+      </div>
+      <button class="refresh" id="refreshButton" type="button"><span id="refreshIcon" aria-hidden="true">↻</span>Refresh data</button>
+    </section>
+
+    <section class="summary" aria-label="Data summary">
+      <article class="card"><div class="card-label">Latest reading</div><div class="card-value" id="updatedAt">Loading…</div></article>
+      <article class="card"><div class="card-label">Monitored regions</div><div class="card-value" id="regionCount">—<span class="card-note">regions</span></div></article>
+      <article class="card"><div class="card-label">National PSI</div><div class="status-line"><span class="card-value" id="nationalPsi">—</span><span class="status-tag" id="nationalStatus">Waiting for data</span></div></article>
+    </section>
+
+    <section class="table-card" aria-labelledby="table-title">
+      <div class="table-heading">
+        <div><h2 id="table-title">Pollutant indices by region</h2><p>Rows show pollutant metrics; columns show monitored regions.</p></div>
+        <span class="unit">INDEX · PSI</span>
+      </div>
+      <div class="table-wrap">
+        <table id="psiTable">
+          <thead><tr id="tableHeaders"><th scope="col">Pollutant metric</th></tr></thead>
+          <tbody id="tableBody"><tr><td colspan="7" class="message">Fetching Singapore's live PSI data…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="legend" aria-label="Index color guide">
+        <span class="legend-title">Index guide</span>
+        <span class="legend-item"><i class="swatch" style="background:#d9f2e2"></i>0–50 Good</span>
+        <span class="legend-item"><i class="swatch" style="background:#fff0c2"></i>51–100 Moderate</span>
+        <span class="legend-item"><i class="swatch" style="background:#ffe0c2"></i>101–200 Unhealthy</span>
+        <span class="legend-item"><i class="swatch" style="background:#f9d5d5"></i>201+ Very unhealthy</span>
+      </div>
+    </section>
+    <div class="footer"><span>Source: Singapore data.gov.sg real-time PSI API</span><span id="fetchNote">Readings may change as monitoring data updates.</span></div>
+  </main>
+
+  <script>
+    const API_URL = 'https://api-open.data.gov.sg/v2/real-time/api/psi';
+    const metricNames = {
+      psi_twenty_four_hourly: '24-hour PSI',
+      pm25_sub_index: 'PM2.5 Sub-Index',
+      pm10_sub_index: 'PM10 Sub-Index',
+      o3_sub_index: 'Ozone (O₃) Sub-Index',
+      so2_sub_index: 'Sulfur Dioxide (SO₂) Sub-Index',
+      co_sub_index: 'Carbon Monoxide (CO) Sub-Index',
+      no2_one_hour_max: 'Nitrogen Dioxide (NO₂), 1-hour Max',
+      pm25_twenty_four_hourly: 'PM2.5 (24-hour)',
+      pm10_twenty_four_hourly: 'PM10 (24-hour)'
+    };
+    const regionNames = { national: 'National', central: 'Central', east: 'East', north: 'North', south: 'South', west: 'West' };
+    const button = document.getElementById('refreshButton');
+
+    function severity(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return { label: '—', bg: 'transparent', fg: '#7c899a' };
+      if (n <= 50) return { label: 'Good', bg: '#e5f5eb', fg: '#287747' };
+      if (n <= 100) return { label: 'Moderate', bg: '#fff3d3', fg: '#8a6500' };
+      if (n <= 200) return { label: 'Unhealthy', bg: '#ffead9', fg: '#a65013' };
+      return { label: 'Very unhealthy', bg: '#fbe1e1', fg: '#a33434' };
+    }
+
+    function formatTime(timestamp) {
+      if (!timestamp) return 'Time unavailable';
+      const date = new Date(timestamp);
+      if (Number.isNaN(date.getTime())) return String(timestamp);
+      return new Intl.DateTimeFormat('en-SG', {
+        timeZone: 'Asia/Singapore', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(date);
+    }
+
+    async function fetchPSIData() {
+      button.disabled = true;
+      document.getElementById('refreshIcon').classList.add('spin');
+      document.getElementById('fetchNote').textContent = 'Connecting to data.gov.sg…';
+      try {
+        const response = await fetch(API_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const jsonData = await response.json();
+        const item = jsonData?.data?.items?.[0];
+        const readings = item?.readings;
+        if (!readings || typeof readings !== 'object') throw new Error('The API returned no valid PSI readings');
+
+        const metrics = Object.keys(readings);
+        const firstMetric = metrics.find(metric => readings[metric] && typeof readings[metric] === 'object');
+        const regions = firstMetric ? Object.keys(readings[firstMetric]) : [];
+        if (!metrics.length || !regions.length) throw new Error('No readings are currently available');
+
+        document.getElementById('tableHeaders').innerHTML = '<th scope="col">Pollutant metric</th>' + regions.map(region =>
+          `<th scope="col">${({ national: 'National', central: 'Central', east: 'East', north: 'North', south: 'South', west: 'West' })[region] || region.replaceAll('_', ' ')}</th>`
+        ).join('');
+
+        document.getElementById('tableBody').innerHTML = metrics.map(metric => {
+          const values = readings[metric] || {};
+          const label = metricNames[metric] || metric.replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
+          return `<tr><td><span class="metric">${label}</span><span class="metric-code">${metric}</span></td>` +
+            regions.map(region => {
+              const value = values[region];
+              if (value === undefined || value === null || value === '') return '<td><span class="missing">—</span></td>';
+              const tone = severity(value);
+              return `<td><span class="value" style="color:${tone.fg};background:${tone.bg}">${value}</span></td>`;
+            }).join('') + '</tr>';
+        }).join('');
+
+        const national = readings.psi_twenty_four_hourly?.national ?? readings.psi_twenty_four_hourly?.[regions.find(region => region === 'national')];
+        const tone = severity(national);
+        document.getElementById('updatedAt').textContent = formatTime(item.update_timestamp || item.timestamp);
+        document.getElementById('regionCount').innerHTML = `${regions.length}<span class="card-note">regions</span>`;
+        document.getElementById('nationalPsi').textContent = national ?? '—';
+        const status = document.getElementById('nationalStatus');
+        status.textContent = national === undefined ? 'No data' : tone.label;
+        status.style.color = tone.fg;
+        status.style.background = tone.bg;
+        document.getElementById('fetchNote').textContent = `Last fetched: ${new Intl.DateTimeFormat('en-SG', { timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())}`;
+      } catch (error) {
+        console.error('Failed to fetch PSI data:', error);
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="${document.getElementById('tableHeaders').children.length || 7}" class="message error">Unable to load data: ${error.message}. Check your connection and try again.</td></tr>`;
+        document.getElementById('fetchNote').textContent = 'Data is temporarily unavailable';
+        document.getElementById('nationalStatus').textContent = 'Load failed';
+      } finally {
+        button.disabled = false;
+        document.getElementById('refreshIcon').classList.remove('spin');
+      }
+    }
+
+    button.addEventListener('click', fetchPSIData);
+    fetchPSIData();
+  </script>
+</body>
+</html>
